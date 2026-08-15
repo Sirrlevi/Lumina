@@ -37,7 +37,7 @@ Create a Google AI Studio API key and add:
 
 ```text
 GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.6-flash
 ```
 
 Keep `GEMINI_API_KEY` server-side. Do not prefix it with `NEXT_PUBLIC_`.
@@ -51,3 +51,8 @@ Add the same Firebase variables plus `GEMINI_API_KEY` and `GEMINI_MODEL` under P
 A 2D selfie cannot objectively reveal true 3D bone structure or produce a universal attractiveness truth. The AI result is a visual-perception estimate calibrated to the requested PSL-style scale. Lighting, camera, expression, hairstyle and grooming can materially affect it.
 
 No Telegram sender, hidden camera, IP harvesting or covert telemetry is included. Camera analysis is visible and user initiated.
+
+
+### Gemini configuration
+
+Set `GEMINI_API_KEY` in Vercel as a server-only environment variable. Set `GEMINI_MODEL=gemini-3.6-flash`. The `/api/ai-analyze` route uses Gemini's Interactions API with inline image input and structured JSON output.
