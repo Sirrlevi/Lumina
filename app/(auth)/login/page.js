@@ -1,7 +1,9 @@
 "use client";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import {signInWithEmailAndPassword} from "firebase/auth";
+import {auth} from "@/lib/firebase";
+import {useEffect,useState} from "react";
+import {useRouter} from "next/navigation";
+import Link from "next/link";
 import B from "@/components/GoogleButton";
-export default function Login(){const[e,se]=useState(""),[p,sp]=useState(""),[err,setErr]=useState("");const r=useRouter();return <form onSubmit={async ev=>{ev.preventDefault();setErr("");try{await signInWithEmailAndPassword(auth,e,p);r.push("/dashboard/upload")}catch(x){setErr(x.message?.replace("Firebase: ","")||"Login failed")}}} className="glass p-6 max-w-md mx-auto mt-10 space-y-3"><h1 className="text-2xl font-black">Welcome back</h1><input required type="email" placeholder="Email" onChange={e=>se(e.target.value)} className="w-full p-3 bg-black/30 rounded-xl"/><input required type="password" placeholder="Password" onChange={e=>sp(e.target.value)} className="w-full p-3 bg-black/30 rounded-xl"/><button className="btn-neon w-full">Login</button>{err&&<p className="text-sm text-rose-300">{err}</p>}<B/></form>}
+import GuestGate from "@/components/GuestGate";
+export default function Login(){const[email,setEmail]=useState(""),[pass,setPass]=useState(""),[err,setErr]=useState(""),[busy,setBusy]=useState(false);const r=useRouter();const submit=async e=>{e.preventDefault();if(busy)return;setBusy(true);setErr("");try{await signInWithEmailAndPassword(auth,email.trim(),pass);r.replace("/dashboard/upload");r.refresh()}catch(x){const code=x?.code||"";setErr(code.includes("invalid-credential")?"Email or password is incorrect.":code.includes("too-many")?"Too many attempts. Try again later.":x?.message?.replace("Firebase: ","")||"Login failed.")}finally{setBusy(false)}};return <GuestGate><div className="max-w-md mx-auto mt-8 sm:mt-14"><form onSubmit={submit} className="glass p-6 sm:p-8 space-y-4"><div><p className="eyebrow">WELCOME BACK</p><h1 className="text-3xl font-black mt-1">Log in</h1><p className="text-sm text-white/45 mt-2">Continue to your LUMINA dashboard.</p></div><input required type="email" autoComplete="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="field"/><input required type="password" autoComplete="current-password" placeholder="Password" value={pass} onChange={e=>setPass(e.target.value)} className="field"/><button disabled={busy} className="btn-neon w-full">{busy?"Signing in…":"Log in"}</button>{err&&<p className="error-box">{err}</p>}<div className="divider"><span>or</span></div><B/><p className="text-center text-sm text-white/45">New here? <Link href="/register" className="text-cyan-300">Create an account</Link></p></form></div></GuestGate>}

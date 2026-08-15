@@ -1,10 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
-export default function Profile() {
-  const [user, setUser] = useState(null), [history, setHistory] = useState([]);
-  useEffect(() => onAuthStateChanged(auth, async u => { setUser(u); if (u) { try { const q = query(collection(db, "users", u.uid, "history"), orderBy("ts", "desc")); const snap = await getDocs(q); setHistory(snap.docs.map(d => ({id:d.id,...d.data()}))); } catch {} } }), []);
-  return <div className="space-y-5"><div className="glass p-6"><p className="text-xs text-cyan-300 uppercase tracking-widest">Profile</p><h1 className="text-2xl font-bold mt-1">{user?.displayName || "LUMINA user"}</h1><p className="text-white/50 mt-1">{user?.email || ""}</p></div><div className="glass p-6"><h2 className="font-bold text-xl">History</h2>{history.length === 0 ? <p className="text-white/45 mt-3">No saved analyses yet.</p> : <div className="mt-4 space-y-2">{history.map(x => <div key={x.id} className="flex justify-between bg-black/20 rounded-xl p-3"><span>{new Date(x.ts).toLocaleDateString()}</span><b>{x.numeric}/10 · {x.tier}</b></div>)}</div>}</div></div>;
-}
+import {useEffect,useState} from "react";
+import {auth,db} from "@/lib/firebase";
+import {onAuthStateChanged} from "firebase/auth";
+import {collection,getDocs,query,orderBy} from "firebase/firestore";
+import AuthGate from "@/components/AuthGate";
+export default function Profile(){const[user,setUser]=useState(null),[history,setHistory]=useState([]),[loading,setLoading]=useState(true);useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(u){try{const q=query(collection(db,"users",u.uid,"history"),orderBy("ts","desc"));const s=await getDocs(q);setHistory(s.docs.map(d=>({id:d.id,...d.data()})))}catch{setHistory([])}}setLoading(false)}),[]);return <AuthGate><div className="max-w-4xl mx-auto space-y-5"><div className="glass p-6 sm:p-8"><p className="eyebrow">ACCOUNT</p><h1 className="text-2xl sm:text-3xl font-black mt-1 break-words">{user?.displayName||"LUMINA user"}</h1><p className="text-white/50 mt-1 break-all">{user?.email}</p></div><div className="glass p-6 sm:p-8"><div className="flex items-center justify-between gap-4"><h2 className="text-xl font-bold">Analysis history</h2><span className="text-xs text-white/35">{history.length} saved</span></div>{loading?<p className="text-white/40 mt-4">Loading history…</p>:history.length===0?<p className="text-white/45 mt-4">No saved analyses yet. Run your first analysis.</p>:<div className="mt-4 space-y-2">{history.map(x=><div key={x.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-white/5 bg-black/20 p-4"><span className="text-sm text-white/55">{x.ts?new Date(x.ts).toLocaleString():"—"}</span><b>{x.numeric}/10 · {x.tier} · {x.shape}</b></div>)}</div>}</div></div></AuthGate>}

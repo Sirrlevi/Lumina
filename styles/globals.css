@@ -7,3 +7,12 @@ body { @apply bg-[#080812] text-white antialiased; }
 .glass { @apply bg-white/[0.045] backdrop-blur-xl border border-white/[0.09] rounded-2xl shadow-2xl; }
 .btn-neon { @apply px-6 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-black font-bold transition hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100; }
 input:focus, select:focus { outline: 2px solid rgba(34,211,238,.45); outline-offset: 1px; }
+
+.field{width:100%;padding:.8rem 1rem;border-radius:.8rem;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);color:white}
+.field::placeholder{color:rgba(255,255,255,.3)}
+.eyebrow{font-size:.7rem;letter-spacing:.22em;color:rgba(103,232,249,.8);font-weight:700}
+.error-box{padding:.75rem;border-radius:.75rem;border:1px solid rgba(251,113,133,.2);background:rgba(251,113,133,.05);color:#fecdd3;font-size:.875rem}
+.divider{display:flex;align-items:center;gap:.75rem;color:rgba(255,255,255,.25);font-size:.75rem}.divider:before,.divider:after{content:"";height:1px;background:rgba(255,255,255,.08);flex:1}
+.nav-link{color:rgba(255,255,255,.7)}.nav-link:hover{color:white}
+.lumina-spinner{width:28px;height:28px;border-radius:999px;border:2px solid rgba(255,255,255,.12);border-top-color:#67e8f9;animation:lumina-spin .8s linear infinite}@keyframes lumina-spin{to{transform:rotate(360deg)}}
+*{box-sizing:border-box}img,video{max-width:100%}button,a{max-width:100%}

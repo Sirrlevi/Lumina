@@ -1,15 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import Link from "next/link";
+import AuthGate from "@/components/AuthGate";
 import ResultCard from "@/components/ResultCard";
 import PlanGenerator from "@/components/PlanGenerator";
-
-export default function Results() {
-  const [data, setData] = useState(undefined);
-  useEffect(() => {
-    try { setData(JSON.parse(localStorage.getItem("lumina_last") || "null")); } catch { setData(null); }
-  }, []);
-  if (data === undefined) return <div className="text-center mt-20 text-white/50">Loading result…</div>;
-  if (!data) return <div className="glass p-8 text-center"><h1 className="text-2xl font-bold">No result yet</h1><p className="text-white/50 mt-2">Upload a clear front-facing photo first.</p><Link href="/dashboard/upload" className="btn-neon inline-block mt-5">Start analysis</Link></div>;
-  return <div className="space-y-5"><ResultCard data={data}/><PlanGenerator rating={data.numeric}/><div className="text-center py-4"><Link href="/dashboard/upload" className="text-cyan-300 hover:text-cyan-200">← Analyze another photo</Link></div></div>;
-}
+export default function Results(){const[data,setData]=useState(undefined);useEffect(()=>{try{const raw=localStorage.getItem("lumina_last");setData(raw?JSON.parse(raw):null)}catch{setData(null)}},[]);return <AuthGate>{data===undefined?<div className="glass p-8 text-center"><div className="lumina-spinner mx-auto"/><p className="mt-4 text-white/50">Loading your result…</p></div>:!data?<div className="glass p-8 text-center max-w-xl mx-auto"><h1 className="text-2xl font-bold">No analysis yet</h1><p className="text-white/50 mt-2">Upload a photo and your complete breakdown will appear here.</p><Link href="/dashboard/upload" className="btn-neon inline-flex mt-5">Start analysis</Link></div>:<div className="max-w-5xl mx-auto space-y-5"><div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3"><div><p className="eyebrow">YOUR RESULT</p><h1 className="text-3xl sm:text-4xl font-black mt-1">Facial analysis</h1></div><Link href="/dashboard/upload" className="text-cyan-300 text-sm">Analyze another photo →</Link></div><ResultCard data={data}/><PlanGenerator rating={data.numeric}/></div>}</AuthGate>}

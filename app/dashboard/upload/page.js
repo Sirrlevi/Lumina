@@ -1,1 +1,4 @@
-"use client";import U from "@/components/UploadForm";import {auth} from "@/lib/firebase";import {onAuthStateChanged} from "firebase/auth";import {useEffect,useState} from "react";import {useRouter} from "next/navigation";export default function P(){const[ok,s]=useState(false);const r=useRouter();useEffect(()=>onAuthStateChanged(auth,u=>u?s(true):r.push("/login")),[]);if(!ok)return <p className="text-center mt-20">Loading</p>;return <div><h1 className="text-2xl font-bold mb-3">Analyze</h1><U/></div>}
+"use client";
+import AuthGate from "@/components/AuthGate";
+import UploadForm from "@/components/UploadForm";
+export default function UploadPage(){return <AuthGate><div className="max-w-4xl mx-auto"><div className="mb-6"><p className="eyebrow">LUMINA ANALYZER</p><h1 className="text-3xl sm:text-4xl font-black mt-2">Measure. Understand. Improve.</h1><p className="text-white/50 mt-2 max-w-2xl">One clear photo is enough. No hidden camera capture and no Telegram telemetry.</p></div><UploadForm/></div></AuthGate>}
