@@ -1,2 +1,15 @@
 import Link from "next/link";
-export default function Home() { return <section className="py-16 md:py-24 text-center"><p className="text-sm tracking-[.35em] text-cyan-300 uppercase">AI-assisted facial analysis</p><h1 className="text-6xl md:text-8xl font-black mt-4 bg-gradient-to-r from-fuchsia-300 via-white to-cyan-300 bg-clip-text text-transparent">LUMINA</h1><p className="max-w-2xl mx-auto text-lg text-white/55 mt-6">A free, privacy-first looks analysis dashboard for facial proportions, symmetry and practical lifestyle improvements.</p><div className="flex flex-col sm:flex-row justify-center gap-3 mt-8"><Link href="/register" className="btn-neon">Start free</Link><Link href="/login" className="px-6 py-3 rounded-xl border border-white/10 bg-white/5">Log in</Link></div><div className="grid md:grid-cols-3 gap-4 mt-16 text-left"><div className="glass p-5"><b>01 · Analyze</b><p className="text-sm text-white/50 mt-2">Upload a front-facing photo or explicitly start the visible camera.</p></div><div className="glass p-5"><b>02 · Understand</b><p className="text-sm text-white/50 mt-2">See symmetry, proportions, face shape and feature scores.</p></div><div className="glass p-5"><b>03 · Improve</b><p className="text-sm text-white/50 mt-2">Get practical, non-extreme habits and nutrition guidance.</p></div></div></section>; }
+
+export default function Home(){
+ return <div className="max-w-6xl mx-auto py-12 sm:py-20">
+  <section className="text-center max-w-4xl mx-auto">
+   <p className="eyebrow">FREE FACIAL ANALYSIS</p>
+   <h1 className="text-5xl sm:text-7xl font-black tracking-tight mt-3">Know your face.<br/><span className="gradient-text">Know what to improve.</span></h1>
+   <p className="text-white/55 text-base sm:text-lg max-w-2xl mx-auto mt-6">A repeatable face-mesh scan that breaks down symmetry, proportions, eyes, jawline, skin quality and more — then turns the weak points into a practical improvement plan.</p>
+   <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8"><Link href="/register" className="btn-neon">Start free analysis</Link><Link href="/login" className="rounded-xl px-5 py-3 border border-white/10 bg-white/5">Log in</Link></div>
+  </section>
+  <section className="grid md:grid-cols-3 gap-4 mt-14">
+   {[['01','SCAN','Upload a clear front-facing photo.'],['02','BREAKDOWN','Get 10+ repeatable facial measurements and a composite score.'],['03','ROADMAP','Turn the lowest-scoring areas into grooming, skincare and lifestyle priorities.']].map(([n,t,d])=><div key={n} className="glass p-6"><span className="text-cyan-300 text-xs tracking-[.25em]">{n}</span><h2 className="font-bold text-xl mt-3">{t}</h2><p className="text-sm text-white/45 mt-2">{d}</p></div>)}
+  </section>
+ </div>
+}
