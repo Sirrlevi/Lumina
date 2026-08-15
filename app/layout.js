@@ -1,19 +1,4 @@
-import "./../styles/globals.css";
+import "../styles/globals.css";
 import Navbar from "@/components/Navbar";
-import { Inter } from "next/font/google";
-const inter = Inter({ subsets:["latin"] });
-
-export const metadata = { title:"LUMINA – AI Looksmaxxing Coach", description:"Upload, analyze, improve" };
-
-export default function RootLayout({children}){
-  return (
-    <html lang="en">
-      <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-br from-[#0a0a12] via-[#1a1033] to-[#0a0a12]">
-          <Navbar/>
-          <main className="max-w-5xl mx-auto p-4">{children}</main>
-        </div>
-      </body>
-    </html>
-  );
-}
+export const metadata = { title: "LUMINA — AI Looks Analysis", description: "Free AI-assisted facial proportion and symmetry analysis." };
+export default function RootLayout({ children }) { return <html lang="en"><body><div className="min-h-screen bg-[#080812] bg-[radial-gradient(circle_at_15%_10%,rgba(217,70,239,.16),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(34,211,238,.12),transparent_35%)]"><div className="max-w-6xl mx-auto px-4 py-4"><Navbar/><main>{children}</main></div></div></body></html>; }

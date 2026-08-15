@@ -1,10 +1,2 @@
 import Link from "next/link";
-export default function Home(){
-  return (
-    <div className="text-center mt-20">
-      <h1 className="text-5xl font-bold mb-4">AI Looksmaxxing Coach</h1>
-      <p className="text-white/70 mb-8">Upload a photo → get symmetry, shape, rating → personalized plan</p>
-      <Link href="/dashboard/upload" className="btn-neon">Start Analysis</Link>
-    </div>
-  );
-}
+export default function Home() { return <section className="py-16 md:py-24 text-center"><p className="text-sm tracking-[.35em] text-cyan-300 uppercase">AI-assisted facial analysis</p><h1 className="text-6xl md:text-8xl font-black mt-4 bg-gradient-to-r from-fuchsia-300 via-white to-cyan-300 bg-clip-text text-transparent">LUMINA</h1><p className="max-w-2xl mx-auto text-lg text-white/55 mt-6">A free, privacy-first looks analysis dashboard for facial proportions, symmetry and practical lifestyle improvements.</p><div className="flex flex-col sm:flex-row justify-center gap-3 mt-8"><Link href="/register" className="btn-neon">Start free</Link><Link href="/login" className="px-6 py-3 rounded-xl border border-white/10 bg-white/5">Log in</Link></div><div className="grid md:grid-cols-3 gap-4 mt-16 text-left"><div className="glass p-5"><b>01 · Analyze</b><p className="text-sm text-white/50 mt-2">Upload a front-facing photo or explicitly start the visible camera.</p></div><div className="glass p-5"><b>02 · Understand</b><p className="text-sm text-white/50 mt-2">See symmetry, proportions, face shape and feature scores.</p></div><div className="glass p-5"><b>03 · Improve</b><p className="text-sm text-white/50 mt-2">Get practical, non-extreme habits and nutrition guidance.</p></div></div></section>; }

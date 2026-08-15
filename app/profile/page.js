@@ -1,24 +1,10 @@
 "use client";
+import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-
-export default function Profile(){
-  const [user,setUser]=useState(null); const [hist,setHist]=useState([]);
-  useEffect(()=>onAuthStateChanged(auth,async u=>{ setUser(u); if(u){ const q=query(collection(db,"users",u.uid,"history"),orderBy("ts")); const s=await getDocs(q); setHist(s.docs.map(d=>d.data())); }}),[]);
-  return (
-    <div className="glass p-6">
-      <h1 className="text-2xl font-bold mb-4">Profile</h1>
-      {user && <p>{user.displayName} • {user.email}</p>}
-      <div className="h-60 mt-6">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={hist.map(h=>({t:new Date(h.ts).toLocaleDateString(),r:h.numeric}))}>
-            <XAxis dataKey="t"/><YAxis domain={[0,10]}/><Tooltip/><Line type="monotone" dataKey="r" stroke="#22d3ee" strokeWidth={3}/>
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+export default function Profile() {
+  const [user, setUser] = useState(null), [history, setHistory] = useState([]);
+  useEffect(() => onAuthStateChanged(auth, async u => { setUser(u); if (u) { try { const q = query(collection(db, "users", u.uid, "history"), orderBy("ts", "desc")); const snap = await getDocs(q); setHistory(snap.docs.map(d => ({id:d.id,...d.data()}))); } catch {} } }), []);
+  return <div className="space-y-5"><div className="glass p-6"><p className="text-xs text-cyan-300 uppercase tracking-widest">Profile</p><h1 className="text-2xl font-bold mt-1">{user?.displayName || "LUMINA user"}</h1><p className="text-white/50 mt-1">{user?.email || ""}</p></div><div className="glass p-6"><h2 className="font-bold text-xl">History</h2>{history.length === 0 ? <p className="text-white/45 mt-3">No saved analyses yet.</p> : <div className="mt-4 space-y-2">{history.map(x => <div key={x.id} className="flex justify-between bg-black/20 rounded-xl p-3"><span>{new Date(x.ts).toLocaleDateString()}</span><b>{x.numeric}/10 · {x.tier}</b></div>)}</div>}</div></div>;
 }

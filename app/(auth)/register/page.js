@@ -1,28 +1,8 @@
 "use client";
-import { useState } from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-export default function Register(){
-  const [f,setF]=useState({name:"",username:"",email:"",pass:""});
-  const r=useRouter();
-  const submit=async(e)=>{
-    e.preventDefault();
-    const cred=await createUserWithEmailAndPassword(auth,f.email,f.pass);
-    await updateProfile(cred.user,{displayName:f.name});
-    await setDoc(doc(db,"users",cred.user.uid),{name:f.name,username:f.username,email:f.email,created:Date.now()});
-    r.push("/dashboard/upload");
-  };
-  return (
-    <form onSubmit={submit} className="glass p-8 max-w-md mx-auto space-y-4">
-      <h2 className="text-2xl font-bold">Create account</h2>
-      <input placeholder="Full name" className="w-full p-3 bg-black/30 rounded" onChange={e=>setF({...f,name:e.target.value})}/>
-      <input placeholder="Username" className="w-full p-3 bg-black/30 rounded" onChange={e=>setF({...f,username:e.target.value})}/>
-      <input type="email" placeholder="Email" className="w-full p-3 bg-black/30 rounded" onChange={e=>setF({...f,email:e.target.value})}/>
-      <input type="password" placeholder="Password" className="w-full p-3 bg-black/30 rounded" onChange={e=>setF({...f,pass:e.target.value})}/>
-      <button className="btn-neon w-full">Sign Up</button>
-    </form>
-  );
-}
+import B from "@/components/GoogleButton";
+export default function Register(){const [f,setF]=useState({}),[err,setErr]=useState("");const r=useRouter();const submit=async e=>{e.preventDefault();setErr("");try{const c=await createUserWithEmailAndPassword(auth,f.email,f.pass);await updateProfile(c.user,{displayName:f.name});await setDoc(doc(db,"users",c.user.uid),{name:f.name,username:f.username,email:f.email,createdAt:Date.now()},{merge:true});r.push("/dashboard/upload")}catch(e){setErr(e.message?.replace("Firebase: ","")||"Registration failed")}};return <form onSubmit={submit} className="glass p-6 max-w-md mx-auto mt-10 space-y-3"><h1 className="text-2xl font-black">Create your account</h1><input required placeholder="Full name" onChange={e=>setF({...f,name:e.target.value})} className="w-full p-3 bg-black/30 rounded-xl"/><input required placeholder="Username" onChange={e=>setF({...f,username:e.target.value})} className="w-full p-3 bg-black/30 rounded-xl"/><input required type="email" placeholder="Email" onChange={e=>setF({...f,email:e.target.value})} className="w-full p-3 bg-black/30 rounded-xl"/><input required minLength={6} type="password" placeholder="Password (6+ chars)" onChange={e=>setF({...f,pass:e.target.value})} className="w-full p-3 bg-black/30 rounded-xl"/><button className="btn-neon w-full">Create account</button>{err&&<p className="text-sm text-rose-300">{err}</p>}<B text="Sign up with Google"/></form>}
