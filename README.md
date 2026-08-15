@@ -1,19 +1,14 @@
-# LUMINA – AI Looksmaxxing Coach
+# LUMINA v2 – Production Ready
 
-Next.js 14 + Tailwind + Firebase + MediaPipe Face Mesh.
+Features:
+- Email + Google Sign-In (Firebase)
+- Upload photo OR live camera analysis (MediaPipe Face Mesh, client-side)
+- Rating tiers Sub-5 → Adam, symmetry, shape
+- Personalized plans, history graph
+- Auth guards, error handling
 
-**No hidden telemetry** – all camera use is explicit.
-
-## Setup
-1. `npm install`
-2. Copy `.env.local.example` to `.env.local` and fill Firebase keys
-3. `npm run dev`
-
-## Deploy to Vercel
-- Push to GitHub
-- Vercel → New Project → Import repo
-- Add env vars
-- Deploy
-
-Features: auth, upload, client-side 468-landmark analysis, symmetry/shape/rating (Sub-5 → Adam), personalized plans, history.
-# Lumina
+Setup:
+1. npm install
+2. Add .env.local from .env.local.example
+3. Firebase Console → Enable Google provider
+4. npm run dev
