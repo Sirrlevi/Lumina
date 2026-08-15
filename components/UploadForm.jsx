@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
-import { analyzeFace } from "@/lib/faceAnalysis";
+import { analyzeFace, normalizeImage } from "@/lib/faceAnalysis";
+import { analyzeWithAI } from "@/lib/aiAnalysis";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import CameraAnalyzer from "./CameraAnalyzer";
 
-const stages=["Preparing image","Loading face model","Detecting 468 landmarks","Measuring proportions","Calculating scores","Saving result"];
+const stages=["Preparing image","Loading face model","Detecting 468 landmarks","Measuring proportions","AI visual assessment","Combining AI + measurements","Saving result"];
 
 async function makePreview(url){
   return new Promise((resolve,reject)=>{
@@ -40,7 +41,7 @@ export default function UploadForm(){
       ]).catch(()=>{});
     }
 
-    setStage(5);setProgress(100);
+    setStage(6);setProgress(100);
     router.replace("/dashboard/results");
     // Hard fallback for mobile browsers where a client navigation can remain pending.
     window.setTimeout(()=>{if(window.location.pathname!=="/dashboard/results")window.location.assign("/dashboard/results");},500);
@@ -57,8 +58,35 @@ export default function UploadForm(){
       await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error("Image could not be loaded."));});
       setStage(1);setProgress(18);
       const photo=await makePreview(url);
-      const result=await analyzeFace(img,({step,progress})=>{setStage(Math.max(0,step-1));setProgress(progress);});
-      await save(result,photo);
+      const result=await analyzeFace(img,({step,progress,label})=>{setStage(Math.max(0,step-1));setProgress(progress);});
+      const aiCanvas=await normalizeImage(img);
+      const ai=await analyzeWithAI(aiCanvas,result.metrics,({progress,label})=>{setStage(label?.includes("Combining")?5:4);setProgress(progress);});
+      const merged={
+        ...result,
+        numeric: ai.numeric,
+        tier: ai.tier,
+        summary: ai.summary,
+        strengths: ai.strengths,
+        priorities: ai.priorities,
+        confidence: ai.confidence,
+        aiFeatures: ai.aiFeatures,
+        breakdown: {
+          harmony: ai.aiFeatures.harmony,
+          symmetry: ai.aiFeatures.symmetry,
+          jawline: ai.aiFeatures.jawline,
+          cheekbones: ai.aiFeatures.cheekbones,
+          eyeArea: ai.aiFeatures.eyeArea,
+          canthalTilt: ai.aiFeatures.canthalTilt,
+          facialProportions: ai.aiFeatures.facialProportions,
+          midface: ai.aiFeatures.midface,
+          nose: ai.aiFeatures.nose,
+          lips: ai.aiFeatures.lips,
+          skinPresentation: ai.aiFeatures.skinPresentation,
+        },
+        geometryBreakdown: result.breakdown,
+        version: ai.version,
+      };
+      await save(merged,photo);
     }catch(e){
       const msg=e?.message||"Analysis failed. Try another photo.";
       setError(msg.includes("No face")?"I couldn't find a clear face. Use a straight-on photo with your whole face visible, good lighting and minimal tilt.":msg);

@@ -1,44 +1,53 @@
-# LUMINA — Free Face Analysis & Looksmaxxing Coach
+# LUMINA — AI PSL Face Analysis
 
-LUMINA is a Vercel-ready Next.js web app for repeatable facial-geometry analysis and personalized self-improvement guidance.
+LUMINA is a Next.js/Vercel facial-analysis app with a **real multimodal AI scoring pass** plus browser-side MediaPipe measurements. The old geometry-only score is no longer the primary rating, so different faces are not compressed into the same 5.x result.
 
-## What changed in this build
+## Analysis architecture
 
-- Replaced the old score-compression heuristic with a deterministic geometry engine.
-- The same image produces the same measurements and score.
-- Score is built from multiple measurable features instead of a fixed/default value.
-- Added eye area, nose proportion, lip proportion, jaw/face, jaw/cheek, thirds, midface, symmetry and skin/image-quality metrics.
-- Results are stored locally first so Firestore can never block the result screen.
-- Added a hard navigation fallback for mobile browsers if a client-side route transition stalls.
-- Result report includes the analyzed image, feature bars, raw measurements and timestamp.
-- Camera analysis remains visible and user initiated.
-- No Telegram sender, hidden camera, IP harvesting or hidden telemetry is included.
+1. The browser normalizes the uploaded photo and detects the face with MediaPipe Face Mesh.
+2. It extracts supporting geometry: face proportions, jaw/cheek ratios, eye spacing, facial thirds, midface, nose/lip ratios and symmetry.
+3. A compressed copy of the image is sent to `/api/ai-analyze`.
+4. The server calls Gemini 2.5 Flash with a calibrated PSL rubric and the measured geometry as supporting evidence. Gemini returns structured JSON containing the overall score, tier, confidence, feature scores, strengths and priorities.
+5. The AI result is saved locally first; Firestore history is attempted in the background so a database delay cannot block the result page.
 
-## Research-informed product flow
+Google documents Gemini's multimodal image input and structured JSON output support. Gemini 2.5 Flash currently has a free API tier subject to rate limits.
 
-The UX is intentionally based on the common looksmaxxing-app pattern: scan → overall score → feature breakdown → improvement roadmap → re-scan/progress. Public UMAX materials describe facial symmetry, golden-ratio/proportion analysis, jawline/structure, canthal tilt, cheekbones and personalized improvement guidance as core analysis concepts.
+## PSL calibration
 
-This implementation does **not** copy UMAX's proprietary model, prompts, weights, backend or branding. The scoring engine is local and deterministic so users can see what is actually being measured.
+The model is explicitly instructed not to anchor every face around 5.0. The calibration uses broad rarity bands: average faces around 4.5–5.2, clearly above average around 5.3–6.2, high-tier around 6.3–7.2, model-adjacent around 7.3–8.2, exceptional around 8.3–9.0, and 9.1+ only for extraordinarily rare faces. These are community-style labels, not a scientific standard.
 
-## Run locally
+The app does **not** pretend to have UMAX's proprietary weights or training data. A public SCUT-FBP5500 research model can be useful for experimentation, but the original dataset terms restrict commercial use; therefore it is not bundled as a hidden dependency.
+
+## Setup
+
+### 1. Install
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+### 2. Firebase
 
-## Firebase
+Enable Email/Password authentication and Firestore. Add the `NEXT_PUBLIC_FIREBASE_*` values from `.env.local.example`.
 
-Create a Firebase project, enable Email/Password (and optionally Google) authentication, create Firestore, and set the `NEXT_PUBLIC_FIREBASE_*` values from `.env.local.example`.
+### 3. Gemini
 
-## Vercel
+Create a Google AI Studio API key and add: 
 
-Import the GitHub repository as a Next.js project and add the Firebase environment variables in Project Settings → Environment Variables.
+```text
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash
+```
 
-No Telegram environment variables are required.
+Keep `GEMINI_API_KEY` server-side. Do not prefix it with `NEXT_PUBLIC_`.
 
-## Important limitation
+### 4. Vercel
 
-A 2D selfie cannot reveal true 3D bone structure or provide an objective attractiveness score. LUMINA therefore calls its result a **heuristic composite score** based on visible geometry and image quality. It is designed for consistency and self-tracking, not medical or scientific diagnosis.
+Add the same Firebase variables plus `GEMINI_API_KEY` and `GEMINI_MODEL` under Project Settings → Environment Variables. Redeploy after changing variables.
+
+## Important
+
+A 2D selfie cannot objectively reveal true 3D bone structure or produce a universal attractiveness truth. The AI result is a visual-perception estimate calibrated to the requested PSL-style scale. Lighting, camera, expression, hairstyle and grooming can materially affect it.
+
+No Telegram sender, hidden camera, IP harvesting or covert telemetry is included. Camera analysis is visible and user initiated.

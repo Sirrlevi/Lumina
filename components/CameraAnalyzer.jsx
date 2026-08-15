@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
-import { analyzeFace } from "@/lib/faceAnalysis";
+import { analyzeFace, normalizeImage } from "@/lib/faceAnalysis";
+import { analyzeWithAI } from "@/lib/aiAnalysis";
 
 export default function CameraAnalyzer({ onResult }) {
   const video = useRef(null), stream = useRef(null);
@@ -19,7 +20,10 @@ export default function CameraAnalyzer({ onResult }) {
       const canvas = document.createElement("canvas"); canvas.width = video.current.videoWidth; canvas.height = video.current.videoHeight;
       canvas.getContext("2d").drawImage(video.current, 0, 0);
       const result = await analyzeFace(canvas);
-      if (result) await onResult(result); else setError("No face detected. Move into the frame and try again.");
+      if (result) {
+        const ai = await analyzeWithAI(await normalizeImage(canvas), result.metrics);
+        await onResult({ ...result, numeric:ai.numeric, tier:ai.tier, summary:ai.summary, strengths:ai.strengths, priorities:ai.priorities, confidence:ai.confidence, aiFeatures:ai.aiFeatures, breakdown:{harmony:ai.aiFeatures.harmony,symmetry:ai.aiFeatures.symmetry,jawline:ai.aiFeatures.jawline,cheekbones:ai.aiFeatures.cheekbones,eyeArea:ai.aiFeatures.eyeArea,canthalTilt:ai.aiFeatures.canthalTilt,facialProportions:ai.aiFeatures.facialProportions,midface:ai.aiFeatures.midface,nose:ai.aiFeatures.nose,lips:ai.aiFeatures.lips,skinPresentation:ai.aiFeatures.skinPresentation}, geometryBreakdown:result.breakdown, version:ai.version });
+      } else setError("No face detected. Move into the frame and try again.");
     } catch { setError("Camera analysis failed. Try again."); }
     finally { setBusy(false); }
   };
