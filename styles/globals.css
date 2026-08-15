@@ -1,1 +1,7 @@
-@tailwind base;@tailwind components;@tailwind utilities;body{@apply bg-[#0a0a12] text-white} .glass{@apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl} .btn-neon{@apply px-6 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 font-semibold}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-[#0a0a12] text-white font-sans; }
+.glass { @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_40px_rgba(139,92,246,0.15)]; }
+.btn-neon { @apply px-6 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 font-semibold hover:opacity-90 transition; }

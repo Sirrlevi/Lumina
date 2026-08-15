@@ -1,1 +1,26 @@
-"use client";export default function P({rating}){const l=rating<6?"low":rating<8?"mid":"high";const d={low:{e:["Mewing"],d:["Protein"]},mid:{e:["Face yoga"],d:["Omega"]},high:{e:["Maintain"],d:["Zinc"]}}[l];return <div className="glass p-4 mt-3"><b>Plan</b><ul className="list-disc ml-5">{d.e.map(x=><li key={x}>{x}</li>)}</ul></div>}
+"use client";
+import { useState } from "react";
+
+const plans = {
+  low: { ex:["Jaw clench 3x15","Cheek lifts 3x20","Mewing 10min daily"], diet:["High protein","Anti-inflammatory greens","Cut sugar","2L water"] },
+  mid: { ex:["Neck curls","Tongue posture","Face yoga"], diet:["Lean meats","Omega-3","Limit dairy"] },
+  high:{ ex:["Maintain posture","Gua sha 2x/week"], diet:["Balanced macros","Zinc & Vitamin D"] }
+};
+
+export default function PlanGenerator({rating}){
+  const [target,setTarget]=useState("Adam");
+  const level = rating<6?"low":rating<8?"mid":"high";
+  const p = plans[level];
+  return (
+    <div className="glass p-6">
+      <h3 className="text-xl font-bold mb-3">Personalized Plan</h3>
+      <div className="mb-4">Target: <select value={target} onChange={e=>setTarget(e.target.value)} className="bg-black/30 p-2 rounded">
+        {["HTN","Chadlite","Chad","Adam"].map(t=><option key={t}>{t}</option>)}
+      </select></div>
+      <h4 className="font-semibold">Exercises</h4>
+      <ul className="list-disc ml-5 mb-3">{p.ex.map(x=><li key={x}>{x}</li>)}</ul>
+      <h4 className="font-semibold">Diet</h4>
+      <ul className="list-disc ml-5">{p.diet.map(x=><li key={x}>{x}</li>)}</ul>
+    </div>
+  );
+}

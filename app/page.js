@@ -1,1 +1,10 @@
-import Link from "next/link";export default ()=> <div className="text-center mt-20"><h1 className="text-5xl font-bold">LUMINA AI v3</h1><Link href="/dashboard/upload" className="btn-neon mt-4 inline-block">Start</Link></div>
+import Link from "next/link";
+export default function Home(){
+  return (
+    <div className="text-center mt-20">
+      <h1 className="text-5xl font-bold mb-4">AI Looksmaxxing Coach</h1>
+      <p className="text-white/70 mb-8">Upload a photo → get symmetry, shape, rating → personalized plan</p>
+      <Link href="/dashboard/upload" className="btn-neon">Start Analysis</Link>
+    </div>
+  );
+}

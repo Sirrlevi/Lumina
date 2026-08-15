@@ -1,1 +1,30 @@
-"use client";import {useState} from "react";import {analyzeFace} from "@/lib/faceAnalysis";import {useRouter} from "next/navigation";import {auth,db} from "@/lib/firebase";import {collection,addDoc} from "firebase/firestore";import CameraAnalyzer from "./CameraAnalyzer";export default function U(){const[f,sf]=useState(null);const[l,sl]=useState(false);const r=useRouter();const save=async d=>{if(d&&auth.currentUser){await addDoc(collection(db,"users",auth.currentUser.uid,"history"),{...d,ts:Date.now()});localStorage.setItem("lumina_last",JSON.stringify(d));r.push("/dashboard/results")}};const h=async e=>{const file=e.target.files[0];if(!file)return;sf(URL.createObjectURL(file));sl(true);const im=new Image();im.src=URL.createObjectURL(file);await im.decode();const b=await createImageBitmap(im);const d=await analyzeFace(b);sl(false);save(d)};return <div className="space-y-4"><div className="glass p-6 text-center"><input id="up" type="file" accept="image/*" onChange={h} className="hidden"/><label htmlFor="up" className="btn-neon">Upload</label>{l&&<p className="mt-2 animate-pulse">Analyzing...</p>}{f&&<img src={f} className="mt-3 max-h-64 mx-auto rounded"/>}</div><CameraAnalyzer onResult={save}/></div>}
+"use client";
+import { useState } from "react";
+import { analyzeFace } from "@/lib/faceAnalysis";
+import { useRouter } from "next/navigation";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
+
+export default function UploadForm(){
+  const [file,setFile]=useState(null); const [loading,setLoading]=useState(false); const r=useRouter();
+  const handle=async(e)=>{
+    const f=e.target.files[0]; if(!f) return; setFile(URL.createObjectURL(f)); setLoading(true);
+    const img=new Image(); img.src=URL.createObjectURL(f); await img.decode();
+    const bmp=await createImageBitmap(img);
+    const result=await analyzeFace(bmp);
+    setLoading(false);
+    if(result && auth.currentUser){
+      await addDoc(collection(db,"users",auth.currentUser.uid,"history"),{...result,ts:Date.now()});
+      localStorage.setItem("lumina_last",JSON.stringify(result));
+    }
+    r.push("/dashboard/results");
+  };
+  return (
+    <div className="glass p-8 text-center">
+      <input type="file" accept="image/*" onChange={handle} className="hidden" id="up"/>
+      <label htmlFor="up" className="btn-neon cursor-pointer">Choose Photo</label>
+      {loading && <p className="mt-4 animate-pulse">Analyzing with MediaPipe...</p>}
+      {file && <img src={file} className="mt-6 max-h-80 mx-auto rounded-xl"/>}
+    </div>
+  );
+}
