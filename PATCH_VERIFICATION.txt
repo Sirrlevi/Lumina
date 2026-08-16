@@ -25,3 +25,12 @@ Validation:
 - grep -r gemini: 0 matches
 - No file inputs in codebase
 - CameraAnalyzer uses client-only code, guarded by useEffect
+
+2026-08-16 UI/flow patch
+- Scan completion now navigates to /dashboard/results immediately after local result persistence; Firestore history writes are best-effort and no longer block the results screen.
+- Results report redesigned into a screenshot-inspired dark neon PSL dashboard with score ring, status, breakdown bars, strengths and improvement areas.
+- Improvement plan now derives from the scan's lowest-scoring measured areas instead of selecting a generic tier-only plan.
+- Results and plans pages pass the full latest scan object into PlanGenerator.
+- Added a scan-complete arrival banner and result-arrival animation.
+- No facial image is persisted or uploaded by this UI redesign.
+- Plain JavaScript files pass `node --check`; full Next build was not run because dependency installation timed out in the build environment.
