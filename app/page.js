@@ -9,7 +9,7 @@ export default function Home(){
    <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8"><Link href="/register" className="btn-neon">Start free analysis</Link><Link href="/login" className="rounded-xl px-5 py-3 border border-white/10 bg-white/5">Log in</Link></div>
   </section>
   <section className="grid md:grid-cols-3 gap-4 mt-14">
-   {[['01','SCAN','Upload a clear front-facing photo.'],['02','BREAKDOWN','Get 10+ repeatable facial measurements and a composite score.'],['03','ROADMAP','Turn the lowest-scoring areas into grooming, skincare and lifestyle priorities.']].map(([n,t,d])=><div key={n} className="glass p-6"><span className="text-cyan-300 text-xs tracking-[.25em]">{n}</span><h2 className="font-bold text-xl mt-3">{t}</h2><p className="text-sm text-white/45 mt-2">{d}</p></div>)}
+   {[['01','SCAN','Run a guided front-facing camera scan.'],['02','BREAKDOWN','Get 10+ repeatable facial measurements and a composite score.'],['03','ROADMAP','Turn the lowest-scoring areas into grooming, skincare and lifestyle priorities.']].map(([n,t,d])=><div key={n} className="glass p-6"><span className="text-cyan-300 text-xs tracking-[.25em]">{n}</span><h2 className="font-bold text-xl mt-3">{t}</h2><p className="text-sm text-white/45 mt-2">{d}</p></div>)}
   </section>
  </div>
 }

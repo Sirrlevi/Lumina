@@ -1,0 +1,25 @@
+LUMINA FINAL CAMERA-ONLY PATCH
+==============================
+
+Changes:
+- Removed remote AI analysis path.
+- Removed all image/file upload UI and image-upload analysis code.
+- Removed Google sign-in/sign-up so only registered email/password accounts can enter.
+- Removed @mediapipe/face_mesh npm dependency; Face Mesh is loaded browser-side from jsDelivr.
+- Removed unused framer-motion and recharts dependencies.
+- Camera scan has a Start camera -> Start face scan flow only; no manual Stop button.
+- Camera stream is stopped automatically after successful analysis/report handoff.
+- Scan overlay renders facial landmarks, contours, feature guides, symmetry guides and animated scan line.
+- Analysis is local/deterministic from 2D face landmarks; no face image is saved to Firestore.
+- Results retain PSL-style score/tier, face shape, feature breakdown, geometry and improvement priorities.
+
+Validation in this environment:
+- Node syntax check for non-JSX JS: PASS
+- Structural source checks: PASS
+- npm install: NOT COMPLETED because package installation timed out in this environment.
+- next build: NOT RUN because dependencies could not be installed locally.
+
+Vercel build target:
+- package.json has no ONNX Runtime dependency.
+- source has no ONNX Runtime import.
+- source has no remote AI/Gemini import or route.
