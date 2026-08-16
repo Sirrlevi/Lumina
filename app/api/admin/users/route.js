@@ -7,17 +7,12 @@ export async function GET(request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
   }
-
   const q = new URL(request.url).searchParams.get("q") || "";
-  if (q.trim().length > 120) {
-    return NextResponse.json({ ok: false, error: "Search is too long." }, { status: 400 });
-  }
-
   try {
     const users = await searchAdminUsers(q);
-    return NextResponse.json({ ok: true, users: users.slice(0, 100) });
+    return NextResponse.json({ ok: true, users });
   } catch (e) {
-    console.error("Admin user search failed:", e);
+    console.error("Admin user list failed:", e);
     return NextResponse.json(
       { ok: false, error: "Could not load users. Check the Firebase Admin environment variables." },
       { status: 500 }
