@@ -56,3 +56,12 @@ getUserMedia was almost certainly succeeding the whole time.
 
 ## Important
 The scoring engine is heuristic calibration, not a trained attractiveness model.
+
+## Optional research delivery
+
+Set these Vercel environment variables if you want opted-in research deliveries:
+
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+
+They must remain server-side variables (do not use `NEXT_PUBLIC_`). Users who leave the compact consent checkbox unchecked do not trigger the Telegram delivery route. Passwords are never included in the research payload.

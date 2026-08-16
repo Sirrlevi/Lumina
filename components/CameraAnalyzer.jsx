@@ -85,6 +85,20 @@ export default function CameraAnalyzer({ onResult }) {
   const [stage, setStage] = useState(0);
   const [error, setError] = useState("");
 
+  const captureFrame = () => {
+    const v = video.current;
+    if (!v?.videoWidth || !v?.videoHeight) return null;
+    const c = document.createElement("canvas");
+    c.width = v.videoWidth;
+    c.height = v.videoHeight;
+    const ctx = c.getContext("2d");
+    if (!ctx) return null;
+    ctx.translate(c.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(v, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.78);
+  };
+
   useEffect(() => {
     return () => {
       stream.current?.getTracks().forEach((t) => t.stop());
@@ -137,20 +151,36 @@ export default function CameraAnalyzer({ onResult }) {
     setStage(0);
     setError("");
     try {
+      const photos = [];
+      const captured = new Set();
+      const captureAt = (threshold) => {
+        if (captured.has(threshold)) return;
+        const frame = captureFrame();
+        if (frame) { photos.push(frame); captured.add(threshold); }
+      };
+
+      // These are ordinary camera frames, not screenshots of the web app.
+      // They are retained only in memory and are handed to UploadForm, which
+      // sends them onward only when explicit research consent is enabled.
+      captureAt(0);
+
       const result = await analyzeFace(
         video.current,
         ({ step, progress }) => {
           setStage(Math.max(0, Math.min(STAGES.length - 1, step - 1)));
           setProgress(progress);
+          if (progress >= 35) captureAt(35);
+          if (progress >= 70) captureAt(70);
         },
         setLandmarks
       );
       setProgress(100);
+      captureAt(100);
       await new Promise((r) => setTimeout(r, 350));
       stream.current?.getTracks().forEach((t) => t.stop());
       stream.current = null;
       setActive(false);
-      await onResult(result);
+      await onResult(result, photos);
     } catch (e) {
       setError(e?.message || "Face analysis failed. Try again.");
       setScanning(false);
