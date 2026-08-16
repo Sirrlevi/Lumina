@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { TIER_BANDS } from "@/lib/referenceData";
 
 const targets = ["MTN", "HTN", "Chadlite", "Chad", "Adam"];
 const plans = {
@@ -10,9 +11,31 @@ const plans = {
   Adam: { focus: "maintenance", habits: ["Maintain healthy body composition", "Protect skin from UV", "Keep posture and training consistent", "Avoid unsafe cosmetic or supplement shortcuts"], foods: ["balanced whole foods", "adequate protein", "fruit and vegetables", "healthy fats"] }
 };
 
+// TIER_BANDS now comes from lib/referenceData.js - the single place that also
+// drives faceAnalysis.js's tierFor(). This used to be a second, separately
+// hardcoded {MTN:6.2, HTN:7.3, ...} table here, which matched today but had
+// no mechanism keeping it in sync if the bands in referenceData.js ever changed.
+function tierForRating(rating) {
+  for (const [min, t] of TIER_BANDS) if (rating < min) return t;
+  return "Adam";
+}
+
+// Auto-select the tier ABOVE the one the scan just rated you at, not the same
+// tier restated - "Target: MTN" on a report that already says you're MTN
+// isn't a target, it's just your current result again.
+function nextTargetFor(rating) {
+  const current = tierForRating(rating);
+  const idx = targets.indexOf(current);
+  if (idx === -1) return targets[0]; // current tier (Sub-5/LTN) has no plan of its own - start from MTN
+  return targets[Math.min(idx + 1, targets.length - 1)];
+}
+
 export default function PlanGenerator({ rating = 5 }) {
-  const current = targets.find(t => rating < ({MTN:6.2,HTN:7.3,Chadlite:8.3,Chad:9.1,Adam:10}[t])) || "Adam";
-  const [target, setTarget] = useState(current);
+  const suggested = useMemo(() => nextTargetFor(rating), [rating]);
+  const [target, setTarget] = useState(suggested);
+  // Keep the default in sync if this instance ever gets reused for a new rating
+  // (e.g. re-scan without a full route remount) without clobbering a manual pick.
+  useEffect(() => { setTarget(suggested); }, [suggested]);
   const plan = useMemo(() => plans[target], [target]);
   return <div className="glass p-6 mt-5">
     <div className="flex items-start justify-between gap-4"><div><h2 className="text-xl font-bold">Your improvement plan</h2><p className="text-sm text-white/50 mt-1">Target: {target} • focus: {plan.focus}</p></div><select value={target} onChange={e => setTarget(e.target.value)} className="bg-black/50 border border-white/10 rounded-lg px-3 py-2">{targets.map(t => <option key={t}>{t}</option>)}</select></div>
