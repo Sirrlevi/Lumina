@@ -35,9 +35,10 @@ export default function UploadForm() {
     // is best-effort and can finish after navigation.
     try {
       localStorage.setItem("lumina_last", JSON.stringify(record));
+      sessionStorage.setItem("lumina_scan_complete", "1");
     } catch {}
 
-    router.replace("/dashboard/results?scan=complete");
+    router.replace("/dashboard/results");
 
     if (user) {
       try {

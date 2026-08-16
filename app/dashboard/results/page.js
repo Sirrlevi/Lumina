@@ -2,20 +2,27 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import AuthGate from "@/components/AuthGate";
 import ResultCard from "@/components/ResultCard";
 import PlanGenerator from "@/components/PlanGenerator";
 
 export default function Results() {
   const [data, setData] = useState(undefined);
-  const searchParams = useSearchParams();
-  const justCompleted = searchParams.get("scan") === "complete";
+  const [justCompleted, setJustCompleted] = useState(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem("lumina_last");
       setData(raw ? JSON.parse(raw) : null);
+
+      // Avoid useSearchParams() here: this page is statically prerendered by
+      // Next.js, and useSearchParams requires a Suspense boundary. A one-shot
+      // session flag gives us the same UX without forcing a CSR bailout.
+      const completed = sessionStorage.getItem("lumina_scan_complete");
+      if (completed === "1") {
+        setJustCompleted(true);
+        sessionStorage.removeItem("lumina_scan_complete");
+      }
     } catch {
       setData(null);
     }
