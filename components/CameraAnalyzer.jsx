@@ -196,8 +196,8 @@ export default function CameraAnalyzer({ onResult }) {
     <div className="glass p-5 sm:p-7">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold">Live camera scan</h2>
-          <p className="text-sm text-white/45 mt-1">Camera-only • nothing is uploaded for model analysis</p>
+          <h2 className="text-xl sm:text-2xl font-bold">Scan Your Face</h2>
+          <p className="text-sm text-white/45 mt-1">Unlock your true rating</p>
         </div>
         {active && <span className="text-xs text-emerald-300">● camera on</span>}
       </div>

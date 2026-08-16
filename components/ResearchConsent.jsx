@@ -26,8 +26,8 @@ export default function ResearchConsent({ identityKey = "" }) {
         className="mt-0.5 h-4 w-4 shrink-0 accent-cyan-400"
       />
       <span className="text-[11px] leading-4 text-white/45">
-        <span className="text-white/70 font-medium">Research & privacy consent.</span>{" "}
-        If checked, LUMINA may send your scan frames and basic account details to the project&apos;s private Telegram bot for research and quality review. Your password is never sent. Leave unchecked to keep scans on-device.
+        <span className="text-white/70 font-medium">Wanna help make LUMINA smarter?</span>{" "}
+        I agree to Privacy Policy & Terms. Helps us deliver better ratings.
       </span>
     </label>
   );

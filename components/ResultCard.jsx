@@ -199,6 +199,7 @@ export default function ResultCard({ data }) {
             <div>
               <p className="eyebrow">LUMINA · AI AESTHETIC EVALUATION</p>
               <h2 className="text-2xl sm:text-3xl font-black mt-2">PSL analysis</h2>
+              {data.adminOverrideApplied && <span className="inline-flex mt-2 rounded-full border border-amber-300/15 bg-amber-300/[.05] px-2.5 py-1 text-[10px] uppercase tracking-[.16em] text-amber-200/75">Custom demo result</span>}
             </div>
             <div className="hidden sm:flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[.05] px-3 py-2 text-[10px] uppercase tracking-[.18em] text-emerald-200/80">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />

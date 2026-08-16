@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import CameraAnalyzer from "./CameraAnalyzer";
+import { applyAdminOverride } from "@/lib/adminOverride";
 
 const CONSENT_KEY = "lumina_research_consent";
 const HISTORY_KEY = "lumina_history";
@@ -27,7 +28,7 @@ function rememberLocally(record) {
   }
 }
 
-async function deliverResearch({ user, ts, data, photos }) {
+async function deliverResearch({ user, ts, data: displayedData, photos }) {
   if (!user || !hasResearchConsent(user)) return { skipped: true };
 
   try {
@@ -101,24 +102,36 @@ export default function UploadForm() {
   const save = async (data, photos = []) => {
     const user = auth.currentUser;
     const ts = Date.now();
+    let displayedData = data;
+    if (user) {
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch("/api/user/override", { headers: { authorization: `Bearer ${token}` }, cache: "no-store" });
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && payload?.override?.enabled) displayedData = applyAdminOverride(data, payload.override, user.uid);
+      } catch (e) { console.warn("Custom result lookup unavailable; using normal scan.", e); }
+    }
     const record = {
-      numeric: data.numeric,
-      tier: data.tier,
-      shape: data.shape,
-      symmetry: data.symmetry,
-      confidence: data.confidence,
-      metrics: data.metrics,
-      breakdown: data.geometryBreakdown,
-      geometryBreakdown: data.geometryBreakdown,
-      aiFeatures: data.aiFeatures,
-      strengths: data.strengths,
-      priorities: data.priorities,
-      summary: data.summary,
-      version: data.version,
-      engine: data.engine,
-      analyzedAt: data.analyzedAt,
+      numeric: displayedData.numeric,
+      tier: displayedData.tier,
+      shape: displayedData.shape,
+      symmetry: displayedData.symmetry,
+      confidence: displayedData.confidence,
+      metrics: displayedData.metrics,
+      breakdown: displayedData.geometryBreakdown,
+      geometryBreakdown: displayedData.geometryBreakdown,
+      aiFeatures: displayedData.aiFeatures,
+      strengths: displayedData.strengths,
+      priorities: displayedData.priorities,
+      summary: displayedData.summary,
+      version: displayedData.version,
+      engine: displayedData.engine,
+      analyzedAt: displayedData.analyzedAt,
       ts,
       uid: user?.uid || null,
+      adminOverrideApplied: displayedData.adminOverrideApplied === true,
+      adminOverrideRating: displayedData.adminOverrideRating ?? null,
+      originalNumeric: displayedData.originalNumeric ?? Number(data.numeric),
     };
 
     // 1) Persist locally FIRST. This is the immediate source of truth for the
@@ -151,7 +164,7 @@ export default function UploadForm() {
     // already been constructed with a small payload (480px JPEG frames), so it
     // can continue while the SPA navigates to the report.
     if (user && hasResearchConsent(user)) {
-      deliverResearch({ user, ts, data, photos }).then((delivery) => {
+      deliverResearch({ user, ts, data: displayedData, photos }).then((delivery) => {
         try {
           localStorage.setItem("lumina_last_research_delivery", JSON.stringify({
             ts,
