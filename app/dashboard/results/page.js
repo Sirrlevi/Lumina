@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import AuthGate from "@/components/AuthGate";
 import ResultCard from "@/components/ResultCard";
 import PlanGenerator from "@/components/PlanGenerator";
@@ -11,21 +13,28 @@ export default function Results() {
   const [justCompleted, setJustCompleted] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("lumina_last");
-      setData(raw ? JSON.parse(raw) : null);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      try {
+        const raw = localStorage.getItem("lumina_last");
+        const parsed = raw ? JSON.parse(raw) : null;
+        // A saved result only belongs on screen if it was produced by the
+        // person currently signed in — otherwise this is stale data left
+        // behind by a different account on this device.
+        setData(parsed && user && parsed.uid === user.uid ? parsed : null);
 
-      // Avoid useSearchParams() here: this page is statically prerendered by
-      // Next.js, and useSearchParams requires a Suspense boundary. A one-shot
-      // session flag gives us the same UX without forcing a CSR bailout.
-      const completed = sessionStorage.getItem("lumina_scan_complete");
-      if (completed === "1") {
-        setJustCompleted(true);
-        sessionStorage.removeItem("lumina_scan_complete");
+        // Avoid useSearchParams() here: this page is statically prerendered by
+        // Next.js, and useSearchParams requires a Suspense boundary. A one-shot
+        // session flag gives us the same UX without forcing a CSR bailout.
+        const completed = sessionStorage.getItem("lumina_scan_complete");
+        if (completed === "1") {
+          setJustCompleted(true);
+          sessionStorage.removeItem("lumina_scan_complete");
+        }
+      } catch {
+        setData(null);
       }
-    } catch {
-      setData(null);
-    }
+    });
+    return () => unsubscribe();
   }, []);
 
   return (

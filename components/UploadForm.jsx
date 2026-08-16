@@ -66,11 +66,11 @@ async function deliverResearch({ user, ts, data: displayedData, photos }) {
         timestamp: new Date(ts).toISOString(),
       },
       analysis: {
-        numeric: data.numeric,
-        tier: data.tier,
-        shape: data.shape,
-        confidence: data.confidence,
-        breakdown: data.breakdown || data.geometryBreakdown || {},
+        numeric: displayedData.numeric,
+        tier: displayedData.tier,
+        shape: displayedData.shape,
+        confidence: displayedData.confidence,
+        breakdown: displayedData.breakdown || displayedData.geometryBreakdown || {},
       },
       photos: photos.slice(0, 3),
     };

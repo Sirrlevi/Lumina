@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import AuthGate from "@/components/AuthGate";
 import PlanGenerator from "@/components/PlanGenerator";
 
@@ -8,11 +10,16 @@ export default function Plans() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    try {
-      setData(JSON.parse(localStorage.getItem("lumina_last") || "null"));
-    } catch {
-      setData(null);
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      try {
+        const raw = localStorage.getItem("lumina_last");
+        const parsed = raw ? JSON.parse(raw) : null;
+        setData(parsed && user && parsed.uid === user.uid ? parsed : null);
+      } catch {
+        setData(null);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   return (

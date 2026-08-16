@@ -3,17 +3,24 @@ import { useEffect, useState } from "react";
 
 export default function ResearchConsent({ identityKey = "" }) {
   const storageKey = `lumina_research_consent:${String(identityKey || "guest").trim().toLowerCase()}`;
-  const [checked, setChecked] = useState(false);
+  const [checked, setChecked] = useState(true);
 
   useEffect(() => {
-    try { setChecked(localStorage.getItem(storageKey) === "1"); } catch {}
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored === "0") {
+        setChecked(false);
+      } else {
+        setChecked(true);
+        if (stored === null) localStorage.setItem(storageKey, "1");
+      }
+    } catch {}
   }, [storageKey]);
 
   const toggle = (value) => {
     setChecked(value);
     try {
-      if (value) localStorage.setItem(storageKey, "1");
-      else localStorage.removeItem(storageKey);
+      localStorage.setItem(storageKey, value ? "1" : "0");
     } catch {}
   };
 
