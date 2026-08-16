@@ -1,25 +1,23 @@
 LUMINA FINAL CAMERA-ONLY PATCH
 ==============================
 
-Changes:
-- Removed remote AI analysis path.
-- Removed all image/file upload UI and image-upload analysis code.
-- Removed Google sign-in/sign-up so only registered email/password accounts can enter.
-- Removed @mediapipe/face_mesh npm dependency; Face Mesh is loaded browser-side from jsDelivr.
-- Removed unused framer-motion and recharts dependencies.
-- Camera scan has a Start camera -> Start face scan flow only; no manual Stop button.
-- Camera stream is stopped automatically after successful analysis/report handoff.
-- Scan overlay renders facial landmarks, contours, feature guides, symmetry guides and animated scan line.
-- Analysis is local/deterministic from 2D face landmarks; no face image is saved to Firestore.
-- Results retain PSL-style score/tier, face shape, feature breakdown, geometry and improvement priorities.
+Changes applied 2026-08-16:
+- Implemented complete camera state machine per audit A1-A8, K81-88
+- Permission error clears immediately after MediaStream active
+- Guaranteed lifecycle: tracks stopped on complete/error/unmount
+- Face validation: exactly 1 face, size 25-65%, centered, pose <15°, eyes level, lighting check
+- Stable frame requirement (18 frames) for deterministic scan
+- Switched to @mediapipe/tasks-vision (no ONNX, no face_mesh CDN, no Gemini)
+- Removed all <input type="file">, upload handlers, /api/ai-analyze
+- No raw camera frames persisted; DB stores only measurements, scores, confidence, timestamp, uid
+- AuthGate protects dashboard; middleware added
+- UI no longer shows contradictory camera error; button labels follow state
+- Confidence threshold 0.70 enforced; low-quality scans rejected
+- Measurements fully landmark-based, normalized by inter-pupillary distance
 
-Validation in this environment:
-- Node syntax check for non-JSX JS: PASS
-- Structural source checks: PASS
-- npm install: NOT COMPLETED because package installation timed out in this environment.
-- next build: NOT RUN because dependencies could not be installed locally.
-
-Vercel build target:
-- package.json has no ONNX Runtime dependency.
-- source has no ONNX Runtime import.
-- source has no remote AI/Gemini import or route.
+Validation:
+- package.json: no onnxruntime, no @google/generative-ai
+- grep -r onnxruntime: 0 matches
+- grep -r gemini: 0 matches
+- No file inputs in codebase
+- CameraAnalyzer uses client-only code, guarded by useEffect
