@@ -1,53 +1,61 @@
-# LUMINA — AI PSL Face Analysis
+# LUMINA — Local Facial Analysis
 
-LUMINA is a Next.js/Vercel facial-analysis app with a **real multimodal AI scoring pass** plus browser-side MediaPipe measurements. The old geometry-only score is no longer the primary rating, so different faces are not compressed into the same 5.x result.
+LUMINA is a camera-only facial analysis web app. The scanner does not accept arbitrary image uploads and does not use Gemini/OpenRouter for analysis.
 
-## Analysis architecture
+## Flow
 
-1. The browser normalizes the uploaded photo and detects the face with MediaPipe Face Mesh.
-2. It extracts supporting geometry: face proportions, jaw/cheek ratios, eye spacing, facial thirds, midface, nose/lip ratios and symmetry.
-3. A compressed copy of the image is sent to `/api/ai-analyze`.
-4. The server calls Gemini 2.5 Flash with a calibrated PSL rubric and the measured geometry as supporting evidence. Gemini returns structured JSON containing the overall score, tier, confidence, feature scores, strengths and priorities.
-5. The AI result is saved locally first; Firestore history is attempted in the background so a database delay cannot block the result page.
+`Register → Login → Start Face Scan → MediaPipe landmark scan → local beauty model + geometry → PSL-style report`
 
-Google documents Gemini's multimodal image input and structured JSON output support. Gemini 2.5 Flash currently has a free API tier subject to rate limits.
+### Scanner
 
-## PSL calibration
+- Front-camera only.
+- No file picker / drag-and-drop upload.
+- Only one face is accepted.
+- The scan starts with `START FACE SCAN`.
+- There is no Stop button; the camera stops automatically after completion or failure.
+- The live overlay renders landmarks, jaw/brow/eye/nose/lip guides, facial midline, thirds, symmetry guide and animated scan beam.
+- The scanner waits for a centered, relatively stable face before scoring.
 
-The model is explicitly instructed not to anchor every face around 5.0. The calibration uses broad rarity bands: average faces around 4.5–5.2, clearly above average around 5.3–6.2, high-tier around 6.3–7.2, model-adjacent around 7.3–8.2, exceptional around 8.3–9.0, and 9.1+ only for extraordinarily rare faces. These are community-style labels, not a scientific standard.
+### Local scoring
 
-The app does **not** pretend to have UMAX's proprietary weights or training data. A public SCUT-FBP5500 research model can be useful for experimentation, but the original dataset terms restrict commercial use; therefore it is not bundled as a hidden dependency.
+The browser runs:
+- MediaPipe Face Mesh for 468/478 landmark tracking.
+- A browser ONNX EfficientNet beauty model published by `kale-eb/moggle-model`.
+- The model project's README reports training using SCUT-FBP5500, MEBeauty and FairFace and reports a 0.8779 Pearson test correlation.
+- A deterministic facial-geometry engine calculates symmetry, jaw/cheek ratios, eye spacing, canthal tilt, facial thirds, nose/lip proportions and face shape.
+- The final report exposes the model score, geometry measurements and PSL-style tier.
 
-## Setup
+**Licensing:** the upstream model project and its underlying datasets have their own terms. SCUT-FBP5500's original authors state that the dataset is for non-commercial research use and request contact for commercial use. Do not launch a commercial service using those assets until their terms are cleared.
 
-### 1. Install
+### Storage
+
+After a completed scan, only the analysis result/metadata is stored in the user's local storage and Firestore history. Camera frames are not uploaded by the scanner.
+
+## Environment
+
+Firebase client configuration is required for authentication/history:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+```
+
+No Gemini, OpenRouter or Telegram credentials are required.
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-### 2. Firebase
+Production:
 
-Enable Email/Password authentication and Firestore. Add the `NEXT_PUBLIC_FIREBASE_*` values from `.env.local.example`.
-
-### 3. Gemini
-
-Create a Google AI Studio API key and add: 
-
-```text
-GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-3.6-flash
+```bash
+npm run build
+npm start
 ```
-
-Keep `GEMINI_API_KEY` server-side. Do not prefix it with `NEXT_PUBLIC_`.
-
-### 4. Vercel
-
-Add the same Firebase variables plus `GEMINI_API_KEY` and `GEMINI_MODEL` under Project Settings → Environment Variables. Redeploy after changing variables.
-
-## Important
-
-A 2D selfie cannot objectively reveal true 3D bone structure or produce a universal attractiveness truth. The AI result is a visual-perception estimate calibrated to the requested PSL-style scale. Lighting, camera, expression, hairstyle and grooming can materially affect it.
-
-No Telegram sender, hidden camera, IP harvesting or covert telemetry is included. Camera analysis is visible and user initiated.
