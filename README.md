@@ -65,3 +65,20 @@ Set these Vercel environment variables if you want opted-in research deliveries:
 - `TELEGRAM_CHAT_ID`
 
 They must remain server-side variables (do not use `NEXT_PUBLIC_`). Users who leave the compact consent checkbox unchecked do not trigger the Telegram delivery route. Passwords are never included in the research payload.
+
+## History persistence
+
+Each completed scan is written immediately to browser local history and to
+`users/{uid}/history/{timestamp}` in Firestore. The profile page renders local
+history immediately and merges Firestore history when available. A Firestore
+rules file is included in this project; deploy it with the Firebase CLI if your
+current Firebase rules do not already grant the authenticated user access to
+that path.
+
+## Telegram delivery diagnostics
+
+`GET /api/telegram/research` returns only whether the two server-side Telegram
+environment variables are configured. It never returns the token or chat ID.
+The POST route returns a safe Telegram API error description when Telegram
+rejects a message, making configuration mistakes visible in the browser/server
+logs without exposing the bot token.

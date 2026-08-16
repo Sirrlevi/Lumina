@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
-import { collection, addDoc, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import CameraAnalyzer from "./CameraAnalyzer";
 
 const CONSENT_KEY = "lumina_research_consent";
@@ -20,7 +20,79 @@ function rememberLocally(record) {
     const existing = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
     const next = [{ id: `local-${record.ts}`, ...record }, ...existing.filter((x) => x.ts !== record.ts)].slice(0, 50);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-  } catch {}
+    return true;
+  } catch (e) {
+    console.error("Local history write failed", e);
+    return false;
+  }
+}
+
+async function deliverResearch({ user, ts, data, photos }) {
+  if (!user || !hasResearchConsent(user)) return { skipped: true };
+
+  try {
+    let profile = {};
+    try {
+      const profileSnap = await Promise.race([
+        getDoc(doc(db, "users", user.uid)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Profile lookup timeout")), 2500)),
+      ]);
+      profile = profileSnap.exists() ? profileSnap.data() : {};
+    } catch (e) {
+      console.warn("Profile lookup unavailable; continuing with Firebase account data", e);
+    }
+
+    let priorScans = 0;
+    try {
+      const historySnap = await Promise.race([
+        getDocs(collection(db, "users", user.uid, "history")),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("History lookup timeout")), 2500)),
+      ]);
+      priorScans = historySnap.size;
+    } catch (e) {
+      console.warn("Could not read prior scan count; continuing as NEW USER", e);
+    }
+
+    const idToken = await user.getIdToken(true);
+    const payload = {
+      consent: true,
+      user: {
+        uid: user.uid,
+        name: profile.name || user.displayName || "Unknown",
+        username: profile.username || "—",
+        email: user.email || profile.email || "—",
+        status: priorScans > 0 ? "OLD USER" : "NEW USER",
+        timestamp: new Date(ts).toISOString(),
+      },
+      analysis: {
+        numeric: data.numeric,
+        tier: data.tier,
+        shape: data.shape,
+        confidence: data.confidence,
+        breakdown: data.breakdown || data.geometryBreakdown || {},
+      },
+      photos: photos.slice(0, 3),
+    };
+
+    const response = await fetch("/api/telegram/research", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result?.ok !== true) {
+      throw new Error(result?.error || `Telegram delivery failed (${response.status})`);
+    }
+    return result;
+  } catch (e) {
+    console.error("Research delivery failed:", e);
+    return { ok: false, error: e?.message || "Research delivery failed." };
+  }
 }
 
 export default function UploadForm() {
@@ -49,69 +121,49 @@ export default function UploadForm() {
       uid: user?.uid || null,
     };
 
-    // Local persistence is immediate, so the report/history UI does not depend
-    // on network latency or a Firestore write finishing first.
+    // 1) Persist locally FIRST. This is the immediate source of truth for the
+    // current device and guarantees the result screen has something to render.
     rememberLocally(record);
     try {
       localStorage.setItem("lumina_last", JSON.stringify(record));
       sessionStorage.setItem("lumina_scan_complete", "1");
-    } catch {}
+      sessionStorage.setItem("lumina_result_ready", "1");
+    } catch (e) {
+      console.error("Result persistence failed", e);
+    }
 
-    // Firestore remains the durable cross-device history store.
+    // 2) Persist durably in Firestore in the background. Local persistence is
+    // already complete, so a slow network or Firestore rule cannot delay the
+    // result screen. A deterministic id prevents duplicate records on retry.
     if (user) {
-      try {
-        await addDoc(collection(db, "users", user.uid, "history"), record);
-      } catch (e) {
-        console.error("DB write failed", e);
-      }
+      setDoc(doc(db, "users", user.uid, "history", String(ts)), record, { merge: true })
+        .then(() => {
+          try { localStorage.setItem(`lumina_saved:${ts}`, "firestore"); } catch {}
+        })
+        .catch((e) => {
+          console.error("Firestore history write failed:", e);
+          try { localStorage.setItem(`lumina_saved:${ts}`, "local-only"); } catch {}
+        });
     }
 
-    // Only send research telemetry when the user explicitly opted in.
+    // 3) Research delivery is opt-in. Start it in the background so the user
+    // is never held on the scan screen waiting for Telegram. The request has
+    // already been constructed with a small payload (480px JPEG frames), so it
+    // can continue while the SPA navigates to the report.
     if (user && hasResearchConsent(user)) {
-      try {
-        const profileSnap = await getDoc(doc(db, "users", user.uid));
-        const profile = profileSnap.exists() ? profileSnap.data() : {};
-
-        let priorScans = 0;
+      deliverResearch({ user, ts, data, photos }).then((delivery) => {
         try {
-          const historySnap = await getDocs(collection(db, "users", user.uid, "history"));
-          priorScans = historySnap.size;
+          localStorage.setItem("lumina_last_research_delivery", JSON.stringify({
+            ts,
+            ok: delivery?.ok === true,
+            skipped: delivery?.skipped === true,
+            error: delivery?.error || null,
+          }));
         } catch {}
-
-        const payload = {
-          consent: true,
-          user: {
-            uid: user.uid,
-            name: profile.name || user.displayName || "Unknown",
-            username: profile.username || "—",
-            email: user.email || profile.email || "—",
-            status: priorScans > 1 ? "OLD USER" : "NEW USER",
-            timestamp: new Date(ts).toISOString(),
-          },
-          analysis: {
-            numeric: data.numeric,
-            tier: data.tier,
-            shape: data.shape,
-            confidence: data.confidence,
-          },
-          photos: photos.slice(0, 3),
-        };
-
-        // Do not block the result page on Telegram delivery.
-        const idToken = await user.getIdToken();
-        fetch("/api/telegram/research", {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            authorization: `Bearer ${idToken}`,
-          },
-          body: JSON.stringify(payload),
-        }).catch((e) => console.error("Research delivery failed", e));
-      } catch (e) {
-        console.error("Could not prepare research delivery", e);
-      }
+      }).catch((e) => console.error("Research delivery failed:", e));
     }
 
+    // 4) Always open the result page immediately after local persistence.
     router.replace("/dashboard/results");
   };
 

@@ -89,14 +89,18 @@ export default function CameraAnalyzer({ onResult }) {
     const v = video.current;
     if (!v?.videoWidth || !v?.videoHeight) return null;
     const c = document.createElement("canvas");
-    c.width = v.videoWidth;
-    c.height = v.videoHeight;
+    // Keep research frames small enough for a normal serverless request while
+    // preserving enough detail for review. These are camera frames, not UI screenshots.
+    const maxSide = 480;
+    const scale = Math.min(1, maxSide / Math.max(v.videoWidth, v.videoHeight));
+    c.width = Math.max(1, Math.round(v.videoWidth * scale));
+    c.height = Math.max(1, Math.round(v.videoHeight * scale));
     const ctx = c.getContext("2d");
     if (!ctx) return null;
     ctx.translate(c.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(v, 0, 0, c.width, c.height);
-    return c.toDataURL("image/jpeg", 0.78);
+    return c.toDataURL("image/jpeg", 0.62);
   };
 
   useEffect(() => {
@@ -180,6 +184,7 @@ export default function CameraAnalyzer({ onResult }) {
       stream.current?.getTracks().forEach((t) => t.stop());
       stream.current = null;
       setActive(false);
+      setScanning(false);
       await onResult(result, photos);
     } catch (e) {
       setError(e?.message || "Face analysis failed. Try again.");

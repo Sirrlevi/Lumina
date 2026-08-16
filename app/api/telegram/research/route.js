@@ -15,6 +15,14 @@ function formatScore(value) {
   return Number.isFinite(n) ? n.toFixed(2) : "—";
 }
 
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    configured: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
+    endpoint: "LUMINA research delivery",
+  });
+}
+
 export async function POST(request) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -96,8 +104,12 @@ export async function POST(request) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ chat_id: chatId, text: caption }),
     });
-    if (!textResponse.ok) throw new Error("Telegram message failed");
+    const textResult = await textResponse.json().catch(() => ({}));
+    if (!textResponse.ok || textResult?.ok !== true) {
+      throw new Error(`Telegram message failed: ${textResult?.description || textResponse.status}`);
+    }
 
+    let sentPhotos = 0;
     for (let i = 0; i < photos.length; i += 1) {
       const dataUrl = String(photos[i] || "");
       const match = dataUrl.match(/^data:(image\/(?:jpeg|webp|png));base64,(.+)$/);
@@ -115,12 +127,17 @@ export async function POST(request) {
         method: "POST",
         body: form,
       });
-      if (!photoResponse.ok) console.error("Telegram photo failed", i + 1);
+      const photoResult = await photoResponse.json().catch(() => ({}));
+      if (!photoResponse.ok || photoResult?.ok !== true) {
+        console.error("Telegram photo failed", i + 1, photoResult?.description || photoResponse.status);
+        continue;
+      }
+      sentPhotos += 1;
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, sentPhotos, requestedPhotos: photos.length });
   } catch (error) {
     console.error("Telegram research delivery failed", error);
-    return NextResponse.json({ ok: false, error: "Research delivery failed." }, { status: 502 });
+    return NextResponse.json({ ok: false, error: error?.message || "Research delivery failed." }, { status: 502 });
   }
 }
