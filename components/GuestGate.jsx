@@ -7,10 +7,10 @@ import { auth } from "@/lib/firebase";
 export default function GuestGate({ children }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  useEffect(() => onAuthStateChanged(auth, user => {
+  useEffect(() => { const unsub = onAuthStateChanged(auth, user => {
     if (user) router.replace("/dashboard/upload");
     else setReady(true);
-  }), [router]);
+  }); return () => unsub(); }, [router]);
   if (!ready) return <div className="glass p-8 max-w-md mx-auto mt-12 text-center"><div className="lumina-spinner mx-auto"/><p className="mt-4 text-white/50">Loading…</p></div>;
   return children;
 }
