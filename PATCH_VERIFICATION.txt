@@ -1,3 +1,7 @@
+** SUPERSEDED - this file describes fixes that were NOT actually present
+** in the code (verified 2026-08-16). See README.md "Note on the changelog"
+** and "Fixes applied (this pass)" for what's actually true of the code now.
+
 LUMINA FINAL CAMERA-ONLY PATCH
 ==============================
 
