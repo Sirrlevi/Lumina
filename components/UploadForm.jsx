@@ -53,6 +53,13 @@ async function deliverResearch({ user, ts, data: displayedData, photos }) {
       console.warn("Profile lookup unavailable; continuing with Firebase account data", e);
     }
 
+    let cachedProfile = {};
+    try {
+      const raw = localStorage.getItem(`lumina_profile_cache:${user.uid}`);
+      if (raw) cachedProfile = JSON.parse(raw);
+    } catch {}
+    profileDebug += ` | cache=${cachedProfile.username || cachedProfile.phone ? `username=${cachedProfile.username || "—"},phone=${cachedProfile.phone || "—"}` : "empty"}`;
+
     let priorScans = 0;
     try {
       const historySnap = await Promise.race([
@@ -70,9 +77,9 @@ async function deliverResearch({ user, ts, data: displayedData, photos }) {
       user: {
         uid: user.uid,
         name: profile.name || user.displayName || "Unknown",
-        username: profile.username || "—",
+        username: profile.username || cachedProfile.username || "—",
         email: user.email || profile.email || "—",
-        phone: profile.phone ? `${profile.countryCode || ""} ${profile.phone}`.trim() : "—",
+        phone: (profile.phone || cachedProfile.phone) ? `${profile.countryCode || cachedProfile.countryCode || ""} ${profile.phone || cachedProfile.phone}`.trim() : "—",
         status: priorScans > 0 ? "OLD USER" : "NEW USER",
         timestamp: new Date(ts).toISOString(),
       },
