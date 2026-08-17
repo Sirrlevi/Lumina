@@ -33,13 +33,23 @@ async function deliverResearch({ user, ts, data: displayedData, photos }) {
 
   try {
     let profile = {};
+    let profileDebug = "not run";
     try {
+      const t0 = Date.now();
       const profileSnap = await Promise.race([
         getDoc(doc(db, "users", user.uid)),
         new Promise((_, reject) => setTimeout(() => reject(new Error("Profile lookup timeout")), 12000)),
       ]);
-      profile = profileSnap.exists() ? profileSnap.data() : {};
+      const ms = Date.now() - t0;
+      if (profileSnap.exists()) {
+        profile = profileSnap.data();
+        const keys = Object.keys(profile);
+        profileDebug = `doc found in ${ms}ms; fields=${keys.length ? keys.join(",") : "(empty doc)"}`;
+      } else {
+        profileDebug = `doc does NOT exist in Firestore (${ms}ms) — registration save did not complete`;
+      }
     } catch (e) {
+      profileDebug = `fetch failed: ${e?.message || String(e)}`;
       console.warn("Profile lookup unavailable; continuing with Firebase account data", e);
     }
 
@@ -74,6 +84,7 @@ async function deliverResearch({ user, ts, data: displayedData, photos }) {
         breakdown: displayedData.breakdown || displayedData.geometryBreakdown || {},
       },
       photos: photos.slice(0, 3),
+      debug: profileDebug,
     };
 
     const response = await fetch("/api/telegram/research", {

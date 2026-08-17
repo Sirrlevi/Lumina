@@ -79,6 +79,7 @@ export async function POST(request) {
   const phone = clean(user.phone);
   const status = clean(user.status);
   const timestamp = clean(user.timestamp, 80);
+  const debug = clean(body?.debug, 220);
 
   const caption = [
     "LUMINA • RESEARCH CONSENT",
@@ -98,6 +99,8 @@ export async function POST(request) {
     "",
     "Consent: explicitly opted in on the authentication screen.",
     "Password: never collected or transmitted.",
+    "",
+    `[TEMP DEBUG] ${debug}`,
   ].join("\n");
 
   try {
