@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-export default function ResearchConsent({ identityKey = "" }) {
+export default function ResearchConsent({ identityKey = "", onChange }) {
   const storageKey = `lumina_research_consent:${String(identityKey || "guest").trim().toLowerCase()}`;
   const [checked, setChecked] = useState(true);
 
@@ -10,15 +10,19 @@ export default function ResearchConsent({ identityKey = "" }) {
       const stored = localStorage.getItem(storageKey);
       if (stored === "0") {
         setChecked(false);
+        onChange?.(false);
       } else {
         setChecked(true);
         if (stored === null) localStorage.setItem(storageKey, "1");
+        onChange?.(true);
       }
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
   const toggle = (value) => {
     setChecked(value);
+    onChange?.(value);
     try {
       localStorage.setItem(storageKey, value ? "1" : "0");
     } catch {}

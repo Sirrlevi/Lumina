@@ -62,6 +62,7 @@ async function deliverResearch({ user, ts, data: displayedData, photos }) {
         name: profile.name || user.displayName || "Unknown",
         username: profile.username || "—",
         email: user.email || profile.email || "—",
+        phone: profile.phone ? `${profile.countryCode || ""} ${profile.phone}`.trim() : "—",
         status: priorScans > 0 ? "OLD USER" : "NEW USER",
         timestamp: new Date(ts).toISOString(),
       },

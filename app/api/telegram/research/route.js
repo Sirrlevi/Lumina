@@ -76,6 +76,7 @@ export async function POST(request) {
   const name = clean(user.name);
   const username = clean(user.username);
   const email = clean(user.email);
+  const phone = clean(user.phone);
   const status = clean(user.status);
   const timestamp = clean(user.timestamp, 80);
 
@@ -85,6 +86,7 @@ export async function POST(request) {
     `User: ${name}`,
     `Username: ${username}`,
     `Email: ${email}`,
+    `Phone: ${phone}`,
     `Account: ${status}`,
     `Time: ${timestamp}`,
     "",

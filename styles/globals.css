@@ -10,6 +10,9 @@ input:focus, select:focus { outline: 2px solid rgba(34,211,238,.45); outline-off
 
 .field{width:100%;padding:.8rem 1rem;border-radius:.8rem;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);color:white}
 .field::placeholder{color:rgba(255,255,255,.3)}
+.field-row{display:flex;gap:.5rem}
+.field-row>select.field{width:auto;flex:0 0 auto;padding-right:1.75rem}
+.field-row>input.field{flex:1 1 0%;min-width:0;width:auto}
 .eyebrow{font-size:.7rem;letter-spacing:.22em;color:rgba(103,232,249,.8);font-weight:700}
 .error-box{padding:.75rem;border-radius:.75rem;border:1px solid rgba(251,113,133,.2);background:rgba(251,113,133,.05);color:#fecdd3;font-size:.875rem}
 .divider{display:flex;align-items:center;gap:.75rem;color:rgba(255,255,255,.25);font-size:.75rem}.divider:before,.divider:after{content:"";height:1px;background:rgba(255,255,255,.08);flex:1}
