@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,61 +41,44 @@ export async function POST(request) {
     return NextResponse.json({ ok: true, skipped: true });
   }
 
-  // Verify the Firebase ID token server-side and use the authenticated UID as
-  // the authoritative identity. Never trust username/phone supplied by the browser.
+  // Require a real Firebase session before the server can use its Telegram
+  // credentials. The Firebase Identity Toolkit lookup validates the ID token
+  // without exposing a Firebase service-account key to the browser.
   const authHeader = request.headers.get("authorization") || "";
-  const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  if (!idToken) {
+  const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const firebaseApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!idToken || !firebaseApiKey) {
     return NextResponse.json({ ok: false, error: "Authenticated consent is required." }, { status: 401 });
   }
 
-  let verifiedToken;
-  let profile = {};
+  let verifiedEmail = "";
   try {
-    verifiedToken = await adminAuth().verifyIdToken(idToken);
-    const uid = String(verifiedToken.uid || "");
-    if (!uid) throw new Error("No authenticated user ID");
-
-    const profileSnap = await adminDb().collection("users").doc(uid).get();
-    profile = profileSnap.exists ? (profileSnap.data() || {}) : {};
-  } catch (error) {
-    console.error("Firebase server verification/profile lookup failed", error);
-    const message = String(error?.message || "");
-    if (message.includes("credentials are not configured")) {
-      return NextResponse.json({
-        ok: false,
-        error: "Firebase Admin is not configured on the server. Add FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL and FIREBASE_ADMIN_PRIVATE_KEY."
-      }, { status: 503 });
-    }
-    return NextResponse.json({ ok: false, error: "Authentication or account profile could not be verified." }, { status: 401 });
+    const verifyResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseApiKey)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!verifyResponse.ok) throw new Error("Invalid Firebase token");
+    const verified = await verifyResponse.json();
+    verifiedEmail = String(verified?.users?.[0]?.email || "").toLowerCase();
+    if (!verifiedEmail) throw new Error("No authenticated user");
+  } catch {
+    return NextResponse.json({ ok: false, error: "Authentication could not be verified." }, { status: 401 });
   }
 
-  const verifiedEmail = String(verifiedToken.email || profile.email || "").trim().toLowerCase();
-  if (!verifiedEmail) {
-    return NextResponse.json({ ok: false, error: "Authenticated account has no email address." }, { status: 403 });
-  }
-
-  // Keep the request's identity only as a consistency check. The actual
-  // username/phone/name values below always come from Firebase server-side.
-  const requestedUser = body?.user || {};
-  if (requestedUser.email && String(requestedUser.email).trim().toLowerCase() !== verifiedEmail) {
+  const user = body?.user || {};
+  if (String(user.email || "").toLowerCase() !== verifiedEmail) {
     return NextResponse.json({ ok: false, error: "Account details do not match the authenticated user." }, { status: 403 });
   }
-
   const analysis = body?.analysis || {};
   const photos = Array.isArray(body?.photos) ? body.photos.slice(0, MAX_PHOTOS) : [];
 
-  const historySnap = await adminDb().collection("users").doc(String(verifiedToken.uid)).collection("history").limit(1).get().catch(() => null);
-  const priorScans = historySnap?.size || 0;
-
-  const name = clean(profile.name || verifiedToken.name || verifiedToken.displayName);
-  const username = clean(profile.username);
-  const email = clean(verifiedEmail);
-  const rawPhone = String(profile.phone || "").trim();
-  const countryCode = String(profile.countryCode || "").trim();
-  const phone = clean(rawPhone ? `${countryCode} ${rawPhone}`.trim() : "—");
-  const status = priorScans > 0 ? "OLD USER" : "NEW USER";
-  const timestamp = clean(requestedUser.timestamp || new Date().toISOString(), 80);
+  const name = clean(user.name);
+  const username = clean(user.username);
+  const email = clean(user.email);
+  const phone = clean(user.phone);
+  const status = clean(user.status);
+  const timestamp = clean(user.timestamp, 80);
 
   const caption = [
     "LUMINA • RESEARCH CONSENT",
