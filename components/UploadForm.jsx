@@ -36,7 +36,7 @@ async function deliverResearch({ user, ts, data: displayedData, photos }) {
     try {
       const profileSnap = await Promise.race([
         getDoc(doc(db, "users", user.uid)),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Profile lookup timeout")), 2500)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Profile lookup timeout")), 12000)),
       ]);
       profile = profileSnap.exists() ? profileSnap.data() : {};
     } catch (e) {
@@ -47,7 +47,7 @@ async function deliverResearch({ user, ts, data: displayedData, photos }) {
     try {
       const historySnap = await Promise.race([
         getDocs(collection(db, "users", user.uid, "history")),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("History lookup timeout")), 2500)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("History lookup timeout")), 12000)),
       ]);
       priorScans = historySnap.size;
     } catch (e) {
